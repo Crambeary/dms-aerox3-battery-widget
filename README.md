@@ -132,6 +132,12 @@ DMS plugins are not hot-reloaded automatically. After editing
 dms ipc call plugins reload aerox3Battery
 ```
 
+## Roadmap
+
+Bar-icon display settings (show/hide percentage, colors, and charging
+state) are planned — see [`docs/settings-plan.md`](docs/settings-plan.md)
+for the design and open questions.
+
 ## Credits
 
 - [flozz/rivalcfg](https://github.com/flozz/rivalcfg) does all the actual
