@@ -1,0 +1,15 @@
+{
+  "id": "Aerox3BatteryWidget",
+  "name": "Aerox 3 Battery",
+  "description": "Shows the battery level of a SteelSeries Aerox 3 Wireless Gen 2 mouse in the bar (via rivalcfg)",
+  "version": "1.0.0",
+  "author": "Crambeary",
+  "icon": "battery_std",
+  "type": "widget",
+  "capabilities": [
+    "dankbar-widget"
+  ],
+  "component": "./Aerox3Battery.qml",
+  "settings": "./Aerox3BatterySettings.qml",
+  "permissions": []
+}
