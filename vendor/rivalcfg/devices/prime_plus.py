@@ -1,0 +1,106 @@
+from .. import usbhid
+
+profile = {
+    "name": "SteelSeries Prime+",
+    "models": [
+        {
+            "name": "SteelSeries Prime+",
+            "vendor_id": 0x1038,
+            "product_id": 0x182C,
+            "endpoint": 0,
+        },
+    ],
+    "settings": {
+        "sensitivity": {
+            "label": "Sensitivity presets",
+            "description": "Set sensitivity presets (DPI)",
+            "cli": ["-s", "--sensitivity"],
+            "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+            "command": [0x61],
+            "value_type": "multidpi_range",
+            "input_range": [50, 18000, 50],
+            "output_range": [1, 0x0168, 1],
+            "dpi_length_byte": 2,
+            "count_mode": "number",
+            "first_preset": 0,
+            "max_preset_count": 5,
+            "default": "400, 800, 1200, 2400, 3200",
+        },
+        "polling_rate": {
+            "label": "Polling rate",
+            "description": "Set polling rate (Hz)",
+            "cli": ["-p", "--polling-rate"],
+            "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+            "command": [0x5D],
+            "value_type": "choice",
+            "choices": {
+                125: 0x04,
+                250: 0x03,
+                500: 0x02,
+                1000: 0x01,
+            },
+            "default": 1000,
+        },
+        "color": {
+            "label": "Wheel LED color",
+            "description": "Set the color of the wheel LED",
+            "cli": ["-c", "--color"],
+            "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+            "command": [0x62, 0x01],
+            "command_suffix": [
+                # fmt: off
+                0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
+                0xFF,
+                # fmt: on
+            ],
+            "value_type": "rgbcolor",
+            "default": "#FF5200",
+        },
+        "led_brightness": {
+            "label": "Wheel LED brightness",
+            "description": "Set the brightness of the wheel LED",
+            "cli": ["-l", "--led-brightness"],
+            "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+            "command": [0x5F],
+            "value_type": "range",
+            "input_range": [0, 256, 1],
+            "output_range": [0, 256, 1],
+            "range_length_byte": 2,
+            "default": 256,
+        },
+        "buttons_mapping": {
+            "label": "Buttons mapping",
+            "description": "Set the mapping of the buttons",
+            "cli": ["-b", "--buttons"],
+            "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+            "command": [0x5B],
+            "value_type": "buttons",
+            # fmt: off
+            "buttons": {
+                "Button1":    {"id": 0x01, "offset": 0x00, "default": "button1"},
+                "Button2":    {"id": 0x02, "offset": 0x05, "default": "button2"},
+                "Button3":    {"id": 0x03, "offset": 0x0A, "default": "button3"},
+                "Button4":    {"id": 0x04, "offset": 0x0F, "default": "button4"},
+                "Button5":    {"id": 0x05, "offset": 0x14, "default": "button5"},
+                "Button6":    {"id": 0x06, "offset": 0x19, "default": "dpi"},
+            },
+            "button_field_length": 5,
+            "button_disable":     0x00,
+            "button_keyboard":    0x51,
+            "button_multimedia":  0x61,
+            "button_dpi_switch":  0x30,
+            "button_scroll_up":   0x31,
+            "button_scroll_down": 0x32,
+            # fmt: on
+            "default": "buttons(button1=button1; button2=button2; button3=button3; button4=button4; button5=button5; button6=dpi; layout=qwerty)",
+        },
+    },
+    "save_command": {
+        "report_type": usbhid.HID_REPORT_TYPE_OUTPUT,
+        "command": [0x59],
+    },
+}

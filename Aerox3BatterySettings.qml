@@ -55,7 +55,7 @@ PluginSettings {
             }
 
             StyledText {
-                text: "Reads the battery level via a checkout of flozz/rivalcfg on the device_aerox3_wireless_gen2 branch — the released package doesn't yet support this mouse's USB PID (1038:1890). The checkout is expected at ~/ghq/github.com/flozz/rivalcfg.\n\n• Left click: open the status popout\n• Right click: refresh immediately"
+                text: "Reads the battery via a patched copy of rivalcfg vendored in this plugin (the released package doesn't support this mouse's USB PID yet) — no separate rivalcfg install needed. Two things still need a one-time setup, see the plugin's README:\n\n• pip install hidapi\n• a udev rule granting hidraw access to this mouse\n\nIf the bar icon shows a puzzle piece instead of a battery, hidapi isn't installed — open the popout for the exact command.\n\n• Left click: open the status popout\n• Right click: refresh immediately"
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap

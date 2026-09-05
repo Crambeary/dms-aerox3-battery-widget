@@ -10,9 +10,9 @@ import qs.Modules.Plugins
 // widget (Modules/DankBar/Widgets/Battery.qml): same Theme.getBatteryIcon()
 // icon set and the same charging/low-battery/normal color rules.
 //
-// rivalcfg's released package doesn't recognize this mouse's USB PID yet
-// (Gen 2 support lives on an unmerged branch), so the actual query runs
-// through scripts/battery-level.sh — see that file for why.
+// rivalcfg's released package doesn't recognize this mouse's USB PID yet, so
+// the actual query runs a vendored, patched copy of it (see vendor/NOTICE.md)
+// through scripts/battery-level.sh.
 //
 // Left click opens the popout with a manual refresh button. Right click
 // refreshes directly, same shortcut style as the Voxtype widget.
@@ -23,6 +23,7 @@ PluginComponent {
     property int level: 0
     property bool isCharging: false
     property bool available: false
+    property bool missingDependency: false
     property bool loading: true
     property var lastChecked: null
 
@@ -97,10 +98,14 @@ PluginComponent {
     }
 
     function batteryIcon() {
+        if (root.missingDependency)
+            return "extension";
         return Theme.getBatteryIcon(root.level, root.isCharging, root.available);
     }
 
     function batteryColor() {
+        if (root.missingDependency)
+            return Theme.warning;
         if (!root.available)
             return Theme.widgetIconColor;
         if (root.isLowBattery)
@@ -112,6 +117,20 @@ PluginComponent {
 
     function parseOutput(text) {
         const trimmed = text.trim();
+
+        // Distinct sentinel from battery-level.sh — the `hid` module isn't
+        // installed, which looks identical to "mouse not found" in
+        // rivalcfg's own output otherwise. See that script for why this
+        // can't just be vendored away like rivalcfg itself.
+        if (trimmed === "E: hidapi module not installed") {
+            root.missingDependency = true;
+            root.available = false;
+            root.loading = false;
+            root.lastChecked = new Date();
+            return;
+        }
+
+        root.missingDependency = false;
         const match = trimmed.match(/^(Charging|Discharging)\s+\[[^\]]*\]\s+(\d+)\s*%/);
         if (match) {
             root.isCharging = match[1] === "Charging";
@@ -162,7 +181,7 @@ PluginComponent {
             id: popout
 
             headerText: "Aerox 3 Battery"
-            detailsText: root.loading ? "Checking…" : (root.available ? (root.isCharging ? "Charging" : "Discharging") : "Unavailable")
+            detailsText: root.loading ? "Checking…" : (root.missingDependency ? "Setup needed" : (root.available ? (root.isCharging ? "Charging" : "Discharging") : "Unavailable"))
             showCloseButton: true
 
             Column {
@@ -192,11 +211,21 @@ PluginComponent {
                 StyledText {
                     width: parent.width
                     leftPadding: Theme.spacingS
+                    text: "Install the hidapi Python module:\npip install hidapi\n(or: pip install --user hidapi)"
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.surfaceVariantText
+                    wrapMode: Text.WordWrap
+                    visible: root.missingDependency
+                }
+
+                StyledText {
+                    width: parent.width
+                    leftPadding: Theme.spacingS
                     text: root.available ? "" : "No supported device found — is the mouse on and connected?"
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
-                    visible: !root.available && !root.loading
+                    visible: !root.available && !root.loading && !root.missingDependency
                 }
 
                 StyledText {
