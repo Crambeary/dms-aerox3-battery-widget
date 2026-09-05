@@ -37,5 +37,5 @@ DMS plugins are not hot-reloaded automatically. After editing
 `Aerox3Battery.qml`, run:
 
 ```bash
-qs -p ~/.config/quickshell/dms ipc call plugins reload Aerox3BatteryWidget
+qs -p /usr/share/quickshell/dms ipc call plugins reload Aerox3BatteryWidget
 ```
