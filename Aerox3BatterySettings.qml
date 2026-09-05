@@ -5,7 +5,7 @@ import qs.Modules.Plugins
 
 PluginSettings {
     id: root
-    pluginId: "Aerox3BatteryWidget"
+    pluginId: "aerox3Battery"
 
     StyledText {
         width: parent.width
