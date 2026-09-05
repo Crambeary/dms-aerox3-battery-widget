@@ -28,6 +28,74 @@ PluginComponent {
 
     readonly property bool isLowBattery: available && level <= 20 && !isCharging
 
+    // Cascading low-battery alerts, same notify-send style as DMS's own
+    // first-party DankBatteryAlerts plugin. Ordered ascending so the loop
+    // in checkLowBattery() below can find the deepest tier crossed.
+    readonly property var lowBatteryTiers: [
+        { threshold: 20, urgency: "normal", icon: "material:battery_2_bar", title: "Aerox 3 Battery Low" },
+        { threshold: 15, urgency: "normal", icon: "material:battery_1_bar", title: "Aerox 3 Battery Low" },
+        { threshold: 10, urgency: "critical", icon: "material:battery_alert", title: "Aerox 3 Battery Critical" },
+        { threshold: 5, urgency: "critical", icon: "material:battery_alert", title: "Aerox 3 Battery Critical" }
+    ]
+
+    // Index into lowBatteryTiers of the deepest tier already notified this
+    // discharge cycle; -1 means none yet. Tracking the index (not a bool
+    // per tier) means a check that lands several tiers below the last one
+    // notified — e.g. the widget loads for the first time already at 8% —
+    // fires exactly one notification for the deepest tier reached, not one
+    // per skipped tier.
+    property int notifiedTier: -1
+
+    function checkLowBattery() {
+        if (!root.available)
+            return;
+
+        if (root.isCharging || root.level > root.lowBatteryTiers[0].threshold) {
+            root.notifiedTier = -1;
+            return;
+        }
+
+        let crossedIndex = -1;
+        for (let i = 0; i < root.lowBatteryTiers.length; i++) {
+            if (root.level <= root.lowBatteryTiers[i].threshold)
+                crossedIndex = i;
+        }
+
+        if (crossedIndex > root.notifiedTier) {
+            root.notifiedTier = crossedIndex;
+            root.sendLowBatteryNotification(root.lowBatteryTiers[crossedIndex]);
+        }
+    }
+
+    function sendLowBatteryNotification(tier) {
+        const proc = notifyComponent.createObject(root, {
+            notifyTitle: tier.title,
+            notifyMessage: "Aerox 3 mouse at " + root.level + "% — plug it in to charge.",
+            notifyUrgency: tier.urgency,
+            notifyIcon: tier.icon
+        });
+        proc.running = true;
+    }
+
+    Component {
+        id: notifyComponent
+
+        Process {
+            property string notifyTitle: ""
+            property string notifyMessage: ""
+            property string notifyUrgency: "normal"
+            property string notifyIcon: "material:battery_alert"
+
+            command: ["notify-send", "-a", "Aerox 3 Battery", "-i", notifyIcon, "-u", notifyUrgency, notifyTitle, notifyMessage]
+
+            onExited: exitCode => {
+                if (exitCode !== 0)
+                    console.error("Aerox3BatteryWidget: notify-send failed with code:", exitCode);
+                destroy();
+            }
+        }
+    }
+
     function batteryIcon() {
         return Theme.getBatteryIcon(root.level, root.isCharging, root.available);
     }
@@ -54,6 +122,7 @@ PluginComponent {
         }
         root.loading = false;
         root.lastChecked = new Date();
+        root.checkLowBattery();
     }
 
     function refresh() {

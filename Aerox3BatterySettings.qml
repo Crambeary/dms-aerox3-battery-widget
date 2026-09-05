@@ -17,7 +17,7 @@ PluginSettings {
 
     StyledText {
         width: parent.width
-        text: "SteelSeries Aerox 3 Wireless Gen 2 battery level, polled every 2 minutes via rivalcfg. No configurable options."
+        text: "SteelSeries Aerox 3 Wireless Gen 2 battery level, polled every 2 minutes via rivalcfg. Sends a desktop notification at 20%, 15%, 10%, and 5%. No configurable options."
         font.pixelSize: Theme.fontSizeSmall
         color: Theme.surfaceVariantText
         wrapMode: Text.WordWrap

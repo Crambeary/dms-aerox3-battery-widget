@@ -8,6 +8,11 @@ own laptop-battery widget (same icon set and color rules).
   refresh button
 - **Right click**: refresh immediately
 - Polls every 2 minutes otherwise
+- Sends a desktop notification (`notify-send`) the first time the level
+  drops to 20%, 15%, 10%, and 5% each discharge cycle — normal urgency at
+  20/15%, critical at 10/5%. Resets once charging starts or the level
+  recovers above 20%, same style as DMS's own first-party
+  `DankBatteryAlerts` plugin.
 
 ## Requirement
 
