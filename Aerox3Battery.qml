@@ -93,7 +93,7 @@ PluginComponent {
             id: popout
 
             headerText: "Aerox 3 Battery"
-            detailsText: root.available ? (root.isCharging ? "Charging" : "Discharging") : "Unavailable"
+            detailsText: root.loading ? "Checking…" : (root.available ? (root.isCharging ? "Charging" : "Discharging") : "Unavailable")
             showCloseButton: true
 
             Column {
@@ -112,7 +112,7 @@ PluginComponent {
                     }
 
                     StyledText {
-                        text: root.available ? root.level + "%" : "—"
+                        text: root.loading ? "…" : (root.available ? root.level + "%" : "—")
                         font.pixelSize: Theme.fontSizeLarge
                         font.weight: Font.Bold
                         color: Theme.surfaceText
