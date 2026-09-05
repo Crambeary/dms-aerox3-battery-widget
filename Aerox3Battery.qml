@@ -152,6 +152,14 @@ PluginComponent {
     // Resolved relative to this QML file so the plugin keeps working if it
     // is cloned or symlinked somewhere other than its ghq path.
     readonly property string batteryScript: Qt.resolvedUrl("scripts/battery-level.sh").toString().replace("file://", "")
+    readonly property string copySetupScript: Qt.resolvedUrl("scripts/copy-setup-command.sh").toString().replace("file://", "")
+
+    property string copyButtonLabel: "Copy Setup Command"
+
+    function copySetupCommand() {
+        if (!copySetupProcess.running)
+            copySetupProcess.running = true;
+    }
 
     Process {
         id: batteryProcess
@@ -159,6 +167,21 @@ PluginComponent {
         stdout: StdioCollector {
             onStreamFinished: root.parseOutput(text)
         }
+    }
+
+    Process {
+        id: copySetupProcess
+        command: ["sh", root.copySetupScript]
+        onExited: exitCode => {
+            root.copyButtonLabel = exitCode === 0 ? "Copied!" : "Copy failed — no clipboard tool found";
+            copyLabelResetTimer.restart();
+        }
+    }
+
+    Timer {
+        id: copyLabelResetTimer
+        interval: 1500
+        onTriggered: root.copyButtonLabel = "Copy Setup Command"
     }
 
     // Battery drains slowly, so a HID query every couple of minutes is
@@ -174,7 +197,12 @@ PluginComponent {
         root.refresh();
     }
 
-    popoutWidth: 220
+    // PopoutComponent's own header (see DMS's Modules/Plugins/PopoutComponent.qml)
+    // positions the title with no reserved width and the close button
+    // anchored to the right independently, so a title this long ("Aerox 3
+    // Battery" at fontSizeLarge+4 bold) overlapped the close button at the
+    // previous 220. 280 gives ~40px of clearance between them.
+    popoutWidth: 280
 
     popoutContent: Component {
         PopoutComponent {
@@ -211,7 +239,7 @@ PluginComponent {
                 StyledText {
                     width: parent.width
                     leftPadding: Theme.spacingS
-                    text: "Install the hidapi Python module:\npip install hidapi\n(or: pip install --user hidapi)"
+                    text: "hidapi isn't installed — this is required."
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
@@ -226,6 +254,33 @@ PluginComponent {
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
                     visible: !root.available && !root.loading && !root.missingDependency
+                }
+
+                // Covers both states above: missing hidapi and a generic
+                // "not found" (which is also what a missing udev rule looks
+                // like — a permissions failure that doesn't get its own
+                // sentinel from battery-level.sh). setup.sh checks and fixes
+                // both, so it's a single next step either way.
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingXS
+                    visible: !root.available && !root.loading
+
+                    StyledText {
+                        width: parent.width
+                        leftPadding: Theme.spacingS
+                        text: "Run the plugin's setup script to check/install hidapi and the udev rule:"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.surfaceVariantText
+                        wrapMode: Text.WordWrap
+                    }
+
+                    DankButton {
+                        text: root.copyButtonLabel
+                        iconName: "content_copy"
+                        width: parent.width
+                        onClicked: root.copySetupCommand()
+                    }
                 }
 
                 StyledText {

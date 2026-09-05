@@ -43,22 +43,33 @@ or clone rivalcfg separately.
 
 ## Requirements
 
-Two things *can't* be vendored and need a one-time setup step.
+Two things *can't* be vendored and need a one-time setup step: the `hid`
+Python module (PyPI package `hidapi` — a compiled C extension, so unlike
+rivalcfg it can't ship as plain source in this repo) and a udev rule
+granting unprivileged `hidraw` access to the mouse.
 
-**1. The `hid` Python module** (PyPI package `hidapi`) — a compiled C
-extension wrapping the system `hidapi` library, so unlike rivalcfg it can't
-be shipped as plain source in this repo:
+**Run the setup script** — it checks both, skips anything already done, and
+finishes with a live check against the actual mouse:
+
+```bash
+./setup.sh
+```
+
+It's safe to re-run any time (e.g. after moving the mouse to a new machine).
+If the widget's bar icon shows a puzzle piece instead of a battery, open the
+popout — there's a **Copy Setup Command** button that puts the exact command
+above on your clipboard, so you can paste it straight into a terminal.
+
+<details>
+<summary>Or do it by hand</summary>
+
+**1. Install hidapi:**
 
 ```bash
 pip install --user hidapi
 ```
 
-If the widget's bar icon shows a puzzle piece instead of a battery, this is
-almost certainly why — open the popout for the exact command.
-
-**2. A udev rule** granting your user unprivileged `hidraw` access to the
-mouse (without it, every HID read fails with a permissions error regardless
-of whether `hid` is installed). Create
+**2. Add a udev rule** granting access to both PIDs. Create
 `/etc/udev/rules.d/99-steelseries-aerox3-gen2.rules`:
 
 ```
@@ -78,7 +89,9 @@ sudo udevadm trigger
 > [!TIP]
 > If you already use rivalcfg for other SteelSeries gear and have run
 > `rivalcfg --update-udev` before, you likely already have a rule covering
-> these PIDs and can skip this.
+> these PIDs and can skip this — `setup.sh` detects that automatically too.
+
+</details>
 
 ## Install
 

@@ -55,7 +55,7 @@ PluginSettings {
             }
 
             StyledText {
-                text: "Reads the battery via a patched copy of rivalcfg vendored in this plugin (the released package doesn't support this mouse's USB PID yet) — no separate rivalcfg install needed. Two things still need a one-time setup, see the plugin's README:\n\n• pip install hidapi\n• a udev rule granting hidraw access to this mouse\n\nIf the bar icon shows a puzzle piece instead of a battery, hidapi isn't installed — open the popout for the exact command.\n\n• Left click: open the status popout\n• Right click: refresh immediately"
+                text: "Reads the battery via a patched copy of rivalcfg vendored in this plugin (the released package doesn't support this mouse's USB PID yet) — no separate rivalcfg install needed. Two things still need a one-time setup: the hidapi Python module, and a udev rule granting hidraw access to this mouse.\n\nRun setup.sh in the plugin's install directory to check and fix both — it's safe to re-run any time. If the bar icon shows a puzzle piece instead of a battery, open the popout for a button that copies the exact command to your clipboard.\n\n• Left click: open the status popout\n• Right click: refresh immediately"
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
