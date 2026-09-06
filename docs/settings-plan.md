@@ -1,16 +1,20 @@
 # Settings plan: bar-icon display options
 
-Status: **planned, not started**. Three user-facing toggles requested for
-the bar pill (the popout already shows everything unconditionally and isn't
-in scope here):
+Status: **grilled and decided, not yet implemented**. Three user-facing
+toggles requested for the bar pill (the popout already shows everything
+unconditionally and isn't in scope here):
 
 1. Show percentage next to/in the icon, or hide it
-2. Show semantic colors, or always render neutral
-3. Show charging/discharging status in the bar, or icon-only
+2. Show battery-state colors, or always render neutral
+3. Show a charging indicator glyph in the bar, or icon-only
 
 This doc fixes the mechanism (confirmed against DMS's own source) and lays
-out the three settings with their defaults, exact code touch points, and the
-open questions worth resolving before writing code.
+out the three settings with their defaults and exact code touch points. All
+open questions below were resolved in a grilling session — see
+[CONTEXT.md](../CONTEXT.md) for the vocabulary this session settled
+(Battery state / Fully Charged / Widget status / Charging indicator) and
+[ADR-0001](adr/0001-charging-indicator-not-icon-toggle.md) for the one
+decision that reverses this doc's own original recommendation.
 
 ## Mechanism (confirmed, not guesswork)
 
@@ -40,13 +44,14 @@ DMS plugin settings are simple key/value pairs, declared with the
 
 | Key | Type | Default | Effect |
 |---|---|---|---|
-| `showPercentage` | bool | `true` | Show/hide a percentage text next to the bar icon |
-| `showColors` | bool | `true` | Use semantic colors (error/primary/warning) vs. always `Theme.widgetIconColor` |
-| `showChargingState` | bool | `true` | See open question below — affects icon shape and/or an indicator |
+| `showPercentage` | bool | `false` | Show/hide a percentage text next to the bar icon |
+| `showColors` | bool | `true` | Use battery-state colors (error/primary/success) vs. always `Theme.widgetIconColor` |
+| `showChargingIndicator` | bool | `true` | Show/hide a small bolt glyph next to the icon when charging |
 
-Defaults all default to the current always-on behavior, with one exception
-called out below (`showPercentage`, which is a genuinely new addition, not
-a toggle on existing behavior).
+`showPercentage` defaults to `false` since it's genuinely new UI, not a
+toggle on existing behavior — ships matching today's icon-only look exactly,
+opt-in rather than opt-out. `showColors` and `showChargingIndicator` default
+to `true`, matching current always-on behavior.
 
 ### 1. `showPercentage`
 
@@ -62,71 +67,70 @@ both bar-pill components, following the pattern in DMS's own
 jitter as digits change width). Wrap in `visible:
 pluginData.showPercentage ?? true`.
 
-**Default**: propose `true` (informative by default, matches DMS's own
-native battery widget default) — open to `false` if we'd rather ship
-matching today's icon-only look and let people opt in.
+**Default**: `false` — decided (see table above) to ship matching today's
+icon-only look and let people opt in, rather than DMS's own native widget's
+default of always-on.
+
+**Layout order**: when both `showChargingIndicator` and `showPercentage`
+are on, the bar pill renders bolt → battery icon → percentage text (see
+`showChargingIndicator` below for the bolt itself).
 
 ### 2. `showColors`
 
 **Current state**: `batteryColor()` returns `Theme.error` (low battery),
 `Theme.primary` (charging), `Theme.warning` (missing dependency), or
 `Theme.widgetIconColor` (normal/unavailable) — see `Aerox3Battery.qml`.
+Fully Charged is a new state added alongside this work (see "Fully Charged"
+below): `Theme.success` when `level >= 95 && isCharging`.
 
-**Implementation**: straightforward — `batteryColor()` becomes:
+**Decided**: the missing-dependency warning color is **exempt** from this
+toggle — it's Widget status (the plugin needs setup), not Battery state,
+per [CONTEXT.md](../CONTEXT.md). Every actual battery state (normal, low,
+charging, fully charged) *is* gated by `showColors`, including the new
+Fully Charged → `Theme.success` state.
 
 ```qml
 function batteryColor() {
+    if (root.missingDependency)
+        return Theme.warning; // Widget status — never gated by showColors
     if (!(pluginData.showColors ?? true))
         return Theme.widgetIconColor;
-    // ...existing logic unchanged
+    if (!root.available)
+        return Theme.widgetIconColor;
+    if (root.isFullyCharged)
+        return Theme.success;
+    if (root.isLowBattery)
+        return Theme.error;
+    if (root.isCharging)
+        return Theme.primary;
+    return Theme.widgetIconColor;
 }
 ```
 
-**Open question**: should the missing-dependency warning color
-(`Theme.warning`) be exempt from this toggle? Arguably a setup problem
-should stay visually distinct even if the user has turned off battery-state
-colors, since it's not "battery status" so much as "this widget needs
-attention." Leaning toward **exempting it** (missing-dependency always
-shows warning color regardless of `showColors`), but worth confirming
-before implementing rather than assuming.
+### 3. `showChargingIndicator`
 
-### 3. `showChargingState`
-
-**Open question — needs a decision before implementing**: "show
-charging/discharging status" could mean either of two different things,
-and they're not mutually exclusive:
-
-- **(a) Icon shape**: `Theme.getBatteryIcon()` already returns a distinct
-  bolt-style icon set when charging (`battery_charging_full`,
-  `battery_charging_90`, etc. vs. plain `battery_N_bar`). This setting
-  could control whether we ever pass `isCharging: true` into that call —
-  i.e., when off, the bar icon always looks like a plain (dis)charging
-  battery regardless of actual charging state, and charging is only
-  visible in the popout.
-- **(b) Explicit indicator**: an additional small glyph/text in the bar
-  pill itself (e.g. a bolt icon, or literal "Charging" text) alongside the
-  battery icon, independent of which icon shape is used.
-
-These read very differently to a user turning the setting off: (a) means
-"stop showing me the charging bolt shape," (b) means "add an explicit
-charging label I can see without opening the popout." Recommend clarifying
-intent with whoever's picking this up (or just deciding — (a) is simpler,
-reuses the existing icon-shape mechanism, and needs zero new UI real
-estate) before writing code.
-
-**Tentative recommendation**: go with (a) — it's a smaller change (guards
-the existing `isCharging` argument to `Theme.getBatteryIcon()`), doesn't
-need new layout space in an already-small bar pill, and the popout remains
-the source of truth for exact charging state either way.
+**Decided** (see [ADR-0001](adr/0001-charging-indicator-not-icon-toggle.md)
+for why this reverses the plan's original recommendation): this setting
+controls a small bolt glyph rendered beside the battery icon in the bar
+pill — it does **not** touch icon shape. `Theme.getBatteryIcon()` keeps
+receiving the real `isCharging` value unconditionally, so the icon itself
+always uses DMS's `battery_charging_*` set while charging regardless of
+this setting.
 
 ```qml
 function batteryIcon() {
     if (root.missingDependency)
         return "extension";
-    const charging = (pluginData.showChargingState ?? true) && root.isCharging;
-    return Theme.getBatteryIcon(root.level, charging, root.available);
+    return Theme.getBatteryIcon(root.level, root.isCharging, root.available);
+    // unchanged — icon shape is not gated by showChargingIndicator
 }
 ```
+
+The bolt glyph itself: a second small `DankIcon` (e.g. `"bolt"`), visible
+when `pluginData.showChargingIndicator ?? true` and `root.isCharging`,
+colored with `root.batteryColor()` — same color the main icon uses, so it
+turns `Theme.success` alongside the icon when Fully Charged, and respects
+the `showColors` gating automatically since it reads the same function.
 
 ## Settings UI
 
@@ -136,22 +140,53 @@ top of that file. Follow `DankBatteryAlertsSettings.qml`'s structure
 (section headers via bare `StyledText` + a `StyledRect` divider, in the
 same style as the existing "Requirements" info card lower in the file).
 
+## Fully Charged (bundled into this pass)
+
+Originally filed as an unrelated follow-up, then decided (grilling session)
+to bundle into this same implementation since it shares `batteryColor()`
+and `detailsText` touch points with `showColors` above.
+
+**Decided**: `isFullyCharged: level >= 95 && isCharging` (matches the
+band DMS's own `Theme.getBatteryIcon()` already treats as "topped off" for
+`battery_full`/`battery_charging_full`, tolerating a mouse that reports
+96–99% but is effectively full). New readonly property on `root`:
+
+```qml
+readonly property bool isFullyCharged: available && isCharging && level >= 95
+```
+
+- [ ] Popout `detailsText`: `root.isFullyCharged ? "Fully Charged" : (root.isCharging ? "Charging" : "Discharging")`
+- [ ] `batteryColor()`: `Theme.success` when `isFullyCharged`, gated by
+      `showColors` like every other battery state (see `showColors` above)
+- [ ] Icon shape: unchanged — `Theme.getBatteryIcon()` already renders
+      `battery_charging_full` at this range, no new icon needed
+
 ## Task checklist
 
-- [ ] Resolve the `showChargingState` open question (icon-shape vs.
-      explicit indicator, or both)
-- [ ] Resolve the `showColors` / missing-dependency-warning exemption
-      question
-- [ ] Add `"settings_read", "settings_write"` to `plugin.json` permissions
-- [ ] Add the three `ToggleSetting` blocks to `Aerox3BatterySettings.qml`
-- [ ] Wire `pluginData.showPercentage` into both bar-pill components (new
-      percentage text + `NumericText`/`reserveText` for stable width)
-- [ ] Wire `pluginData.showColors` into `batteryColor()`
-- [ ] Wire `pluginData.showChargingState` into `batteryIcon()`
+- [x] Resolve the `showChargingIndicator` question — bolt glyph beside the
+      icon, icon shape stays unconditional (ADR-0001)
+- [x] Resolve the `showColors` / missing-dependency-warning exemption
+      question — exempt, it's Widget status not Battery state
+- [x] Resolve Fully Charged detection, color, and gating — see above
+- [x] Add `"settings_read", "settings_write"` to `plugin.json` permissions
+- [x] Add the three `ToggleSetting` blocks to `Aerox3BatterySettings.qml`
+- [x] Wire `pluginData.showPercentage` into both bar-pill components (new
+      percentage text + `NumericText`/`reserveText` for stable width),
+      defaulting to `false`
+- [x] Add `isFullyCharged` property and wire it into `batteryColor()` and
+      the popout's `detailsText`
+- [x] Wire `pluginData.showColors` into `batteryColor()`, exempting the
+      missing-dependency branch
+- [x] Add the bolt glyph to both bar-pill components, gated by
+      `pluginData.showChargingIndicator` and `root.isCharging`, colored via
+      `root.batteryColor()`
+- [x] Lay out bar-pill elements in order: bolt → icon → percentage
 - [ ] Confirm live-update actually works in practice (toggle a setting with
       the widget visible, no reload) — mechanism is confirmed from source,
-      but not yet observed running
-- [ ] Update README's feature list and the in-app settings description
-      text to describe the new toggles
+      but not yet observed running (needs a live DMS session; not possible
+      from the sandboxed environment this was implemented in)
+- [x] Update README's feature list and the in-app settings description
+      text to describe the new toggles and the Fully Charged state
 - [ ] Reload (`dms ipc call plugins reload aerox3Battery`) and screenshot
-      each toggle's on/off state for a sanity check before committing
+      each toggle's on/off state, plus the Fully Charged state, for a
+      sanity check before committing (same live-session caveat as above)

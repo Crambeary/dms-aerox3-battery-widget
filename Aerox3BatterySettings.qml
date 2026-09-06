@@ -17,10 +17,44 @@ PluginSettings {
 
     StyledText {
         width: parent.width
-        text: "SteelSeries Aerox 3 Wireless Gen 2 battery level, polled every 2 minutes via rivalcfg. Sends a desktop notification at 20%, 15%, 10%, and 5%. No configurable options."
+        text: "SteelSeries Aerox 3 Wireless Gen 2 battery level, polled every 2 minutes via rivalcfg. Sends a desktop notification at 20%, 15%, 10%, and 5%."
         font.pixelSize: Theme.fontSizeSmall
         color: Theme.surfaceVariantText
         wrapMode: Text.WordWrap
+    }
+
+    StyledRect {
+        width: parent.width
+        height: 1
+        color: Theme.surfaceVariant
+    }
+
+    StyledText {
+        text: "Bar Display"
+        font.pixelSize: Theme.fontSizeMedium
+        font.weight: Font.DemiBold
+        color: Theme.surfaceText
+    }
+
+    ToggleSetting {
+        settingKey: "showPercentage"
+        label: "Show Percentage"
+        description: "Show the battery percentage as text next to the bar icon"
+        defaultValue: false
+    }
+
+    ToggleSetting {
+        settingKey: "showColors"
+        label: "Show Battery-State Colors"
+        description: "Color the icon by battery state (low/charging/fully charged) instead of always neutral"
+        defaultValue: true
+    }
+
+    ToggleSetting {
+        settingKey: "showChargingIndicator"
+        label: "Show Charging Indicator"
+        description: "Show a small bolt glyph next to the icon while charging"
+        defaultValue: true
     }
 
     StyledRect {

@@ -25,9 +25,26 @@ cable (`1038:1892`).
   20/15%, critical at 10/5%. Resets once charging starts or the level
   recovers above 20%, same style as DMS's own first-party
   `DankBatteryAlerts` plugin.
+- Shows a distinct "Fully Charged" state (bar icon and popout) once the
+  mouse is plugged in and at 95%+, instead of just "Charging".
 - If a dependency below is missing, the bar icon switches to a distinct
   puzzle-piece icon (instead of looking like the mouse is just off) and the
   popout tells you what to install.
+
+### Bar display settings
+
+Configurable from *DMS Settings → Plugins → Aerox 3 Battery*:
+
+- **Show Percentage** (off by default): adds a `NN%` text next to the bar
+  icon.
+- **Show Battery-State Colors** (on by default): colors the icon by battery
+  state (low/charging/fully charged) instead of always neutral. The
+  missing-dependency warning color is unaffected by this setting either
+  way — it signals a setup problem, not a battery reading.
+- **Show Charging Indicator** (on by default): shows a small bolt glyph
+  next to the icon while charging. The icon's own shape always reflects
+  charging state regardless of this setting — it only controls the extra
+  glyph.
 
 ## How it reads the battery
 

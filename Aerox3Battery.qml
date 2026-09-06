@@ -28,6 +28,7 @@ PluginComponent {
     property var lastChecked: null
 
     readonly property bool isLowBattery: available && level <= 20 && !isCharging
+    readonly property bool isFullyCharged: available && isCharging && level >= 95
 
     // Cascading low-battery alerts, same notify-send style as DMS's own
     // first-party DankBatteryAlerts plugin. Ordered ascending so the loop
@@ -104,10 +105,16 @@ PluginComponent {
     }
 
     function batteryColor() {
+        // Widget status (setup problem), not a battery reading — never
+        // gated by showColors.
         if (root.missingDependency)
             return Theme.warning;
         if (!root.available)
             return Theme.widgetIconColor;
+        if (!(pluginData.showColors ?? true))
+            return Theme.widgetIconColor;
+        if (root.isFullyCharged)
+            return Theme.success;
         if (root.isLowBattery)
             return Theme.error;
         if (root.isCharging)
@@ -209,7 +216,7 @@ PluginComponent {
             id: popout
 
             headerText: "Aerox 3 Battery"
-            detailsText: root.loading ? "Checking…" : (root.missingDependency ? "Setup needed" : (root.available ? (root.isCharging ? "Charging" : "Discharging") : "Unavailable"))
+            detailsText: root.loading ? "Checking…" : (root.missingDependency ? "Setup needed" : (root.available ? (root.isFullyCharged ? "Fully Charged" : (root.isCharging ? "Charging" : "Discharging")) : "Unavailable"))
             showCloseButton: true
 
             Column {
@@ -303,33 +310,69 @@ PluginComponent {
     }
 
     horizontalBarPill: Component {
-        Item {
-            implicitWidth: icon.implicitWidth
-            implicitHeight: icon.implicitHeight
-            width: implicitWidth
-            height: implicitHeight
+        Row {
+            spacing: Theme.spacingXS
+
+            DankIcon {
+                id: chargingIndicator
+                name: "bolt"
+                size: Math.round(root.iconSize * 0.6)
+                color: root.batteryColor()
+                anchors.verticalCenter: parent.verticalCenter
+                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging
+            }
 
             DankIcon {
                 id: icon
                 name: root.batteryIcon()
                 size: root.iconSize
                 color: root.batteryColor()
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            NumericText {
+                id: percentText
+                text: root.level + "%"
+                reserveText: "100%"
+                width: Math.ceil(Math.max(implicitWidth, reservedWidth))
+                font.pixelSize: Theme.fontSizeSmall
+                color: root.batteryColor()
+                anchors.verticalCenter: parent.verticalCenter
+                visible: (pluginData.showPercentage ?? false) && root.available
             }
         }
     }
 
     verticalBarPill: Component {
-        Item {
-            implicitWidth: icon.implicitWidth
-            implicitHeight: icon.implicitHeight
-            width: implicitWidth
-            height: implicitHeight
+        Column {
+            spacing: 1
+
+            DankIcon {
+                id: chargingIndicator
+                name: "bolt"
+                size: Math.round(root.iconSize * 0.6)
+                color: root.batteryColor()
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging
+            }
 
             DankIcon {
                 id: icon
                 name: root.batteryIcon()
                 size: root.iconSize
                 color: root.batteryColor()
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            NumericText {
+                id: percentText
+                text: root.level + "%"
+                reserveText: "100%"
+                width: Math.ceil(Math.max(implicitWidth, reservedWidth))
+                font.pixelSize: Theme.fontSizeSmall
+                color: root.batteryColor()
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: (pluginData.showPercentage ?? false) && root.available
             }
         }
     }

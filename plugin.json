@@ -11,5 +11,5 @@
   ],
   "component": "./Aerox3Battery.qml",
   "settings": "./Aerox3BatterySettings.qml",
-  "permissions": []
+  "permissions": ["settings_read", "settings_write"]
 }
