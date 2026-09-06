@@ -1,11 +1,11 @@
 # Charging indicator is a separate bolt glyph, not an icon-shape toggle
 
-`docs/settings-plan.md` originally proposed two readings for "show
-charging/discharging status": (a) gate whether the bar icon ever uses DMS's
-`battery_charging_*` icon shapes, or (b) add a separate explicit indicator
-next to the icon, independent of icon shape. The plan's own tentative
-recommendation was (a), since it reuses an existing mechanism and needs no
-new bar-pill layout space.
+The original local planning notes for this feature proposed two readings
+for "show charging/discharging status": (a) gate whether the bar icon ever
+uses DMS's `battery_charging_*` icon shapes, or (b) add a separate explicit
+indicator next to the icon, independent of icon shape. Those notes'
+tentative recommendation was (a), since it reuses an existing mechanism and
+needs no new bar-pill layout space.
 
 Grilled with the user and decided the opposite: `showChargingIndicator`
 controls a small bolt glyph rendered beside the battery icon. The icon's
