@@ -20,11 +20,10 @@ cable (`1038:1892`).
   refresh button
 - **Right click**: refresh immediately
 - Polls every 2 minutes otherwise
-- Sends a desktop notification (`notify-send`) the first time the level
-  drops to 20%, 15%, 10%, and 5% each discharge cycle — normal urgency at
-  20/15%, critical at 10/5%. Resets once charging starts or the level
-  recovers above 20%, same style as DMS's own first-party
-  `DankBatteryAlerts` plugin.
+- Sends a desktop notification (`dms notify`) the first time the level
+  drops to 20%, 15%, 10%, and 5% each discharge cycle. Resets once charging
+  starts or the level recovers above 20%, same style as DMS's own
+  first-party `DankBatteryAlerts` plugin.
 - Shows a distinct "Fully Charged" state (bar icon and popout) once the
   mouse is plugged in and at 95%+, instead of just "Charging".
 - If a dependency below is missing, the bar icon switches to a distinct
