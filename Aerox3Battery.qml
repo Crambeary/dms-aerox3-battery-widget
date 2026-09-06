@@ -145,6 +145,7 @@ PluginComponent {
             root.available = true;
         } else {
             root.available = false;
+            root.isCharging = false;
         }
         root.loading = false;
         root.lastChecked = new Date();
@@ -218,10 +219,19 @@ PluginComponent {
             headerText: "Aerox 3 Battery"
             detailsText: root.loading ? "Checking…" : (root.missingDependency ? "Setup needed" : (root.available ? (root.isFullyCharged ? "Fully Charged" : (root.isCharging ? "Charging" : "Discharging")) : "Unavailable"))
             showCloseButton: true
+            // Column doesn't bind its own height to implicitHeight — only a
+            // Layout parent reads implicitHeight, and every level here is a
+            // plain positioner reading height. Without this, PluginPopout's
+            // Loader (which has no explicit height of its own) keeps
+            // reporting this popout's stale, pre-growth height up the chain,
+            // so the popup surface never resizes and trailing content (e.g.
+            // the setup-script button below a long description) clips.
+            height: implicitHeight
 
             Column {
                 width: parent.width
                 spacing: Theme.spacingS
+                height: implicitHeight
 
                 Row {
                     spacing: Theme.spacingM
@@ -272,6 +282,7 @@ PluginComponent {
                     width: parent.width
                     spacing: Theme.spacingXS
                     visible: !root.available && !root.loading
+                    height: implicitHeight
 
                     StyledText {
                         width: parent.width
@@ -319,7 +330,7 @@ PluginComponent {
                 size: Math.round(root.iconSize * 0.6)
                 color: root.batteryColor()
                 anchors.verticalCenter: parent.verticalCenter
-                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging
+                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging && root.available
             }
 
             DankIcon {
@@ -353,7 +364,7 @@ PluginComponent {
                 size: Math.round(root.iconSize * 0.6)
                 color: root.batteryColor()
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging
+                visible: (pluginData.showChargingIndicator ?? true) && root.isCharging && root.available
             }
 
             DankIcon {
