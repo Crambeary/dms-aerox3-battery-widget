@@ -1,18 +1,26 @@
-# dms-aerox3-battery-widget
+# DMS Aerox 3 Battery Widget
 
 DankMaterialShell (DMS) widget that shows the battery level of a
 SteelSeries Aerox 3 Wireless Gen 2 mouse in the bar, styled to match DMS's
-own laptop-battery widget (same icon set and color rules). Verified working
-over both the 2.4GHz wireless dongle (USB PID `1038:1890`) and a direct USB
+own laptop-battery widget (same icon set and color rules). Built for my
+personal desktop setup. Verified working over both the 2.4GHz wireless dongle (USB PID `1038:1890`) and a direct USB
 cable (`1038:1892`).
 
-> [!NOTE]
-> The mouse also supports Bluetooth, but [rivalcfg](https://github.com/flozz/rivalcfg)
-> has no device profile for it — only the two USB PIDs above — so this widget
-> won't detect the mouse over a Bluetooth connection until upstream support
-> exists. Untested for the same reason on top of that: my Bluetooth adapter
-> is currently broken. If you get this working over Bluetooth (or find the
-> PID it reports), a PR is welcome.
+![Aerox 3 Battery popout showing a discharging mouse at 100% with a Refresh button](screenshot.png)
+
+Existing capture from my DMS desktop; battery level and appearance vary with
+your mouse and theme. See [screenshot notes](screenshots/README.md).
+
+## Compatibility
+
+- Requires a running [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell)
+  desktop, Python 3, `hidapi`, and Linux udev permissions.
+- Verified with the Gen 2 USB dongle and cable listed above. Other Aerox
+  models are not supported by this widget's documented setup.
+- Bluetooth is not supported by the bundled rivalcfg device profiles and
+  has not been tested here.
+- No minimum DMS version or wider distro compatibility matrix has been
+  established.
 
 ## Features
 
@@ -67,14 +75,19 @@ granting unprivileged `hidraw` access to the mouse.
 **Run the setup script** — it checks both, skips anything already done, and
 finishes with a live check against the actual mouse:
 
+Run it **after cloning**, from the plugin directory:
+
 ```bash
-./setup.sh
+cd ~/.config/DankMaterialShell/plugins/aerox3Battery
+bash ./setup.sh
 ```
 
 It's safe to re-run any time (e.g. after moving the mouse to a new machine).
 If the widget's bar icon shows a puzzle piece instead of a battery, open the
-popout — there's a **Copy Setup Command** button that puts the exact command
-above on your clipboard, so you can paste it straight into a terminal.
+popout for dependency details. The current **Copy Setup Command** helper
+uses `sh`, but the setup wizard requires Bash; use `bash ./setup.sh` from
+the plugin directory as shown above. The wizard may request sudo to install
+udev rules, which grant all local users access to these device IDs.
 
 <details>
 <summary>Or do it by hand</summary>
@@ -111,25 +124,31 @@ sudo udevadm trigger
 
 ## Install
 
-From the DMS plugin registry (once this plugin is accepted there):
+Clone directly into the plugins directory (the commands below do not depend
+on registry acceptance):
 
 ```bash
-dms plugins install aerox3Battery
-```
-
-or via **DMS Settings → Plugins → Browse**.
-
-Manually, until then (or to track this repo directly instead of the
-registry snapshot):
-
-```bash
+mkdir -p ~/.config/DankMaterialShell/plugins
 git clone https://github.com/Crambeary/dms-aerox3-battery-widget \
   ~/.config/DankMaterialShell/plugins/aerox3Battery
 dms restart
 ```
 
-Then enable **Aerox 3 Battery** in *DMS Settings → Plugins* and add its
-widget from *DMS Settings → Dank Bar → Widgets*.
+Run the [one-time setup](#requirements), then enable **Aerox 3 Battery**
+in *DMS Settings → Plugins* and add its widget from *DMS Settings → Dank Bar → Widgets*.
+
+## Troubleshooting
+
+From the plugin directory, run the same read-only query the widget uses:
+
+```bash
+./scripts/battery-level.sh
+```
+
+A successful read prints `Charging [...]` or `Discharging [...]`. For a
+missing `hidapi` module, rerun setup with Bash. If no supported device is
+found, check the dongle/cable, mouse power, and udev permissions; reconnect
+the device after changing rules. Right click the widget to refresh.
 
 ## Development
 
